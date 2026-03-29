@@ -50,6 +50,20 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.media:media:1.7.0")
+    // Navigation
+    implementation(
+        "androidx.navigation:navigation-compose:2.7.7"
+    )
+    // ViewModel for Compose
+    implementation(
+        "androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0"
+    )
+    // SavedStateHandle
+    implementation(
+        "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0"
+    )
+    // Webkit (for dark mode)
+    implementation("androidx.webkit:webkit:1.10.0")
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
