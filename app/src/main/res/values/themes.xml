@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.WebWrap" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- ✅ REMOVED: windowFullscreen = true -->
+        <!-- Status bar and nav bar will be controlled programmatically -->
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:statusBarColor">#FF000000</item>
+        <item name="android:navigationBarColor">#FF000000</item>
+    </style>
+</resources>

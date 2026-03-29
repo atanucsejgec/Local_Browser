@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:\\\\Users\\\\atanu\\\\OneDrive\\\\Desktop\\\\Android\\\\ParsonalBrowser\\\\project1.txt\")",
+      "Bash(\"C:\\\\Users\\\\atanu\\\\OneDrive\\\\Desktop\\\\Android\\\\ParsonalBrowser\\\\project1.txt\":*)"
+    ]
+  }
+}
