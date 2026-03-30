@@ -20,15 +20,16 @@ import java.io.ByteArrayInputStream
  * audio from pausing when window loses visibility.
  */
 class BackgroundAudioWebView(context: Context) : WebView(context) {
-    /** Override to prevent pausing audio when window goes invisible */
+    /** Prevent pause when in background (audio) or PiP (video) */
     override fun onWindowVisibilityChanged(visibility: Int) {
-        if (WebViewHolder.backgroundAudioEnabled && visibility != View.VISIBLE) return
+        if ((WebViewHolder.backgroundAudioEnabled || WebViewHolder.pipModeActive)
+            && visibility != View.VISIBLE) return
         super.onWindowVisibilityChanged(visibility)
     }
 
-    /** Override to prevent pausing media in background */
+    /** Prevent media pause in background/PiP */
     override fun onPause() {
-        if (WebViewHolder.backgroundAudioEnabled) return
+        if (WebViewHolder.backgroundAudioEnabled || WebViewHolder.pipModeActive) return
         super.onPause()
     }
 }
@@ -129,6 +130,7 @@ private fun configureWebViewSettings(settings: WebSettings, desktopMode: Boolean
                     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         setGeolocationEnabled(true)
+        WebViewHolder.saveDefaultUserAgent(userAgentString)
     }
 }
 
@@ -168,6 +170,11 @@ private fun createWebViewClient(
             url?.let {
                 onPageFinished(it)
                 onUrlChanged(it)
+            }
+
+            // Dark mode re-injection on page load if enabled
+            if (WebViewHolder.darkModeEnabled && view != null) {
+                DarkModeInjector.enableDarkMode(view)
             }
 
             // Ad blocker CSS/JS injection

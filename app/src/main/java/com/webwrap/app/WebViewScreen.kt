@@ -33,6 +33,8 @@ import com.webwrap.app.ui.*
 import com.webwrap.app.ui.viewmodel.BrowserViewModel
 import com.webwrap.app.webview.*
 import kotlinx.coroutines.delay
+import com.webwrap.app.ui.OfflinePageViewer
+
 
 /**
  * WebViewScreen — Main browser screen with tabs, URL bar, FAB menu,
@@ -46,7 +48,8 @@ fun WebViewScreen(
     browserViewModel: BrowserViewModel,
     onGoHome: () -> Unit,
     onAddToBookmark: (String, String) -> Unit,
-    onSessionUpdate: (List<SavedTab>, Int) -> Unit = { _, _ -> }
+    onSessionUpdate: (List<SavedTab>, Int) -> Unit = { _, _ -> },
+    onOpenIncognito: () -> Unit = {}   // NEW
 ) {
     val context = LocalContext.current
     val activity = context as? MainActivity
@@ -322,18 +325,7 @@ fun WebViewScreen(
             )
 
             // ── INCOGNITO INDICATOR ─────────────────────
-            if (vm.incognitoMode && !isFullScreen) {
-                Surface(
-                    modifier = Modifier.align(Alignment.TopCenter)
-                        .windowInsetsPadding(WindowInsets.statusBars).padding(top = 4.dp),
-                    color = Color(0xFF333333).copy(alpha = 0.8f),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("🕶️ Incognito", color = Color.White, fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
-                }
-            }
+
 
             // ── URL BAR OVERLAY ─────────────────────────
             UrlBarOverlay(
@@ -402,8 +394,20 @@ fun WebViewScreen(
                             Toast.makeText(context, "🗑️ Cleared!", Toast.LENGTH_SHORT).show()
                         },
                         context = context,
-                        activity = activity
+                        activity = activity,
+                        onOpenIncognito = onOpenIncognito,           // NEW
+                        onOpenOfflinePages = { vm.showOfflineViewer = true }  // NEW
                     )
+                )
+            }
+            // ── OFFLINE PAGE VIEWER DIALOG ──────────────────
+            if (vm.showOfflineViewer) {
+                OfflinePageViewer(
+                    onDismiss = { vm.showOfflineViewer = false },
+                    onOpenFile = { fileUrl ->
+                        createNewTab(fileUrl)
+                        vm.showOfflineViewer = false
+                    }
                 )
             }
         }

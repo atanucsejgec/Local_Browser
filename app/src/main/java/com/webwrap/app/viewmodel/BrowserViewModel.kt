@@ -18,7 +18,8 @@ class BrowserViewModel(app: Application) : AndroidViewModel(app) {
     var initialUrl by mutableStateOf("https://www.google.com")
     /** Saved session restored on cold start */
     var savedSession by mutableStateOf<SavedSession?>(null)
-
+    /** Show offline page viewer dialog */
+    var showOfflineViewer by mutableStateOf(false)
     // ── UI Visibility ───────────────────────────────────
     var showUrlBar by mutableStateOf(false)
     var showTabSwitcher by mutableStateOf(false)

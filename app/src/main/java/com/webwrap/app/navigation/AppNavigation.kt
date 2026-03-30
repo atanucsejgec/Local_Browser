@@ -11,6 +11,7 @@ import com.webwrap.app.MainActivity
 import com.webwrap.app.data.SiteBookmark
 import com.webwrap.app.HomeScreen
 import com.webwrap.app.WebViewScreen
+import com.webwrap.app.ui.IncognitoScreen
 import com.webwrap.app.ui.viewmodel.BrowserViewModel
 import com.webwrap.app.ui.viewmodel.HomeViewModel
 
@@ -69,6 +70,13 @@ fun AppNavigation(
             )
         }
 
+        /** Incognito route — completely isolated browser */
+        composable("incognito") {
+            IncognitoScreen(
+                onClose = { navController.popBackStack() }
+            )
+        }
+
         /** Browser screen route */
         composable("browser") {
             WebViewScreen(
@@ -92,8 +100,9 @@ fun AppNavigation(
                         Toast.makeText(context, "📌 Bookmarked!", Toast.LENGTH_SHORT).show()
                     }
                 },
-                onSessionUpdate = { tabs, idx ->
-                    browserViewModel.saveSession(tabs, idx)
+                onSessionUpdate = { tabs, idx -> browserViewModel.saveSession(tabs, idx) },
+                onOpenIncognito = {
+                    navController.navigate("incognito")
                 }
             )
         }

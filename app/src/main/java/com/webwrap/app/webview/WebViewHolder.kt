@@ -52,6 +52,21 @@ object WebViewHolder {
     /** Dark mode CSS injection — re-injected on every page load */
     var darkModeEnabled: Boolean = false
 
+    // ── PiP Mode State ──────────────────────────────────
+    /** True when activity is in PiP mode — prevents WebView pause */
+    var pipModeActive: Boolean = false
+
+// ── Desktop Mode Default UA ─────────────────────────
+    /** Original default User-Agent string — saved on first WebView creation */
+    var defaultUserAgent: String = ""
+
+    /** Save default UA if not already saved (call from PersistentWebView) */
+    fun saveDefaultUserAgent(ua: String) {
+        if (defaultUserAgent.isEmpty()) {
+            defaultUserAgent = ua
+        }
+    }
+
     // ══════════════════════════════════════════════════════
     // ZOOM METHODS — Called from manual +/- buttons
     // ══════════════════════════════════════════════════════

@@ -30,6 +30,7 @@ import com.webwrap.app.ui.navigation.AppNavigation
 import com.webwrap.app.ui.viewmodel.BrowserViewModel
 import com.webwrap.app.webview.WebViewHolder
 
+
 /**
  * MainActivity — App entry point.
  * Handles system bars, PiP callbacks, display cutout, permissions.
@@ -183,17 +184,18 @@ class MainActivity : ComponentActivity() {
     // ══════════════════════════════════════════════════════
 
     /** Called when user presses Home — triggers PiP if enabled */
+    /** PiP: Enter PiP with video-only mode when user presses Home */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         try {
             val browserVm = ViewModelProvider(this)[BrowserViewModel::class.java]
             if (browserVm.pipEnabled && !browserVm.isInPipMode) {
-                PipHelper.enterPipMode(this)
+                PipHelper.enterPipMode(this, WebViewHolder.activeWebView)
             }
         } catch (_: Exception) { }
     }
 
-    /** Handle PiP mode changes — update ViewModel flag */
+    /** PiP: Handle mode changes — inject/remove video-only CSS */
     override fun onPictureInPictureModeChanged(
         isInPipMode: Boolean, newConfig: Configuration
     ) {
@@ -201,6 +203,8 @@ class MainActivity : ComponentActivity() {
         try {
             val browserVm = ViewModelProvider(this)[BrowserViewModel::class.java]
             browserVm.isInPipMode = isInPipMode
+            WebViewHolder.pipModeActive = isInPipMode
+            PipHelper.onPipModeChanged(isInPipMode, WebViewHolder.activeWebView)
         } catch (_: Exception) { }
     }
 

@@ -1,4 +1,4 @@
-package com.webwrap.app.service
+package com.webwrap.app.navigation
 
 import android.annotation.SuppressLint
 import android.app.*
@@ -16,6 +16,10 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import androidx.core.app.NotificationCompat
 import com.webwrap.app.MainActivity
+import android.os.Handler
+import android.os.Looper
+
+
 
 /**
  * OverlayService — Creates a floating browser window on top of other apps.
@@ -116,24 +120,41 @@ class OverlayService : Service() {
     }
 
     /** Create draggable header bar with close button */
+    /** Create draggable header bar with resize and close buttons */
     @SuppressLint("ClickableViewAccessibility")
     private fun createHeaderBar(
         params: WindowManager.LayoutParams,
         root: View
     ): LinearLayout {
+        val resizeHandler = Handler(Looper.getMainLooper())
+        // Container for resize buttons — hidden by default
+        val resizeContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            visibility = View.GONE
+        }
+
+        /** Auto-hide resize buttons after 5 seconds */
+        val hideRunnable = Runnable { resizeContainer.visibility = View.GONE }
+        fun showResizeButtons() {
+            resizeContainer.visibility = View.VISIBLE
+            resizeHandler.removeCallbacks(hideRunnable)
+            resizeHandler.postDelayed(hideRunnable, 5000)
+        }
+
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setBackgroundColor(android.graphics.Color.parseColor("#121218"))
             setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4))
             gravity = Gravity.CENTER_VERTICAL
 
-            // Drag handle — allows moving the window
+            // Drag handle
             var initX = 0; var initY = 0; var initTouchX = 0f; var initTouchY = 0f
             setOnTouchListener { _, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
                         initX = params.x; initY = params.y
                         initTouchX = event.rawX; initTouchY = event.rawY
+                        showResizeButtons()
                         true
                     }
                     MotionEvent.ACTION_MOVE -> {
@@ -146,14 +167,44 @@ class OverlayService : Service() {
                 }
             }
 
+            // Shrink button (-)
+            val shrinkBtn = ImageButton(this@OverlayService).apply {
+                setImageResource(android.R.drawable.btn_minus)
+                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                setOnClickListener {
+                    showResizeButtons()
+                    params.width = (params.width * 0.85f).toInt().coerceAtLeast(dpToPx(200))
+                    params.height = (params.height * 0.85f).toInt().coerceAtLeast(dpToPx(250))
+                    windowManager?.updateViewLayout(root, params)
+                }
+            }
+            // Grow button (+)
+            val growBtn = ImageButton(this@OverlayService).apply {
+                setImageResource(android.R.drawable.btn_plus)
+                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                setOnClickListener {
+                    showResizeButtons()
+                    val dm = resources.displayMetrics
+                    params.width = (params.width * 1.15f).toInt().coerceAtMost(dm.widthPixels)
+                    params.height = (params.height * 1.15f).toInt().coerceAtMost(dm.heightPixels)
+                    windowManager?.updateViewLayout(root, params)
+                }
+            }
+
+            resizeContainer.addView(shrinkBtn, LinearLayout.LayoutParams(dpToPx(32), dpToPx(32)))
+            resizeContainer.addView(growBtn, LinearLayout.LayoutParams(dpToPx(32), dpToPx(32)))
+
+            addView(resizeContainer)
+
+            // Spacer
+            addView(View(this@OverlayService), LinearLayout.LayoutParams(0, 1, 1f))
+
             // Close button
             val closeBtn = ImageButton(this@OverlayService).apply {
                 setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 setOnClickListener { stop(this@OverlayService) }
             }
-            val spacer = View(this@OverlayService)
-            addView(spacer, LinearLayout.LayoutParams(0, 1, 1f))
             addView(closeBtn, LinearLayout.LayoutParams(dpToPx(32), dpToPx(32)))
         }
     }

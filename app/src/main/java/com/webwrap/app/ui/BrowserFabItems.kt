@@ -5,7 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.Color
 import com.webwrap.app.data.*
-import com.webwrap.app.service.OverlayService
+import com.webwrap.app.navigation.OverlayService
 import com.webwrap.app.webview.WebViewHolder
 import com.webwrap.app.ui.viewmodel.BrowserViewModel
 
@@ -34,7 +34,9 @@ fun buildFabItems(
     onShare: (String) -> Unit,
     onClearCache: () -> Unit,
     context: android.content.Context,
-    activity: android.app.Activity?
+    activity: android.app.Activity?,
+    onOpenIncognito: () -> Unit,
+    onOpenOfflinePages: () -> Unit
 ): List<FabItem> = listOf(
     // ── Tab Management ──
     FabItem(icon = Icons.Default.Tab, label = "Tabs ($tabCount)",
@@ -107,15 +109,22 @@ fun buildFabItems(
         isToggle = true, isOn = vm.bgAudioEnabled, activeColor = Color(0xFF4FC3F7),
         onClick = { vm.bgAudioEnabled = !vm.bgAudioEnabled }),
 
-    // ── Desktop Mode ──
+    // ── DESKTOP MODE — Proper UA toggle with reset ──
     FabItem(icon = Icons.Default.Computer,
         label = if (vm.desktopMode) "Desktop: ON" else "Desktop: OFF",
         isToggle = true, isOn = vm.desktopMode, activeColor = Color(0xFFFF9800),
         onClick = {
             vm.desktopMode = !vm.desktopMode
-            activeWebView?.settings?.userAgentString =
-                if (vm.desktopMode) vm.getDesktopUserAgent() else null
-            activeWebView?.reload()
+            val webView = activeWebView ?: return@FabItem
+            if (vm.desktopMode) {
+                webView.settings.userAgentString = vm.getDesktopUserAgent()
+            } else {
+                // Restore to saved default UA (not null — null may not reset on all devices)
+                webView.settings.userAgentString = WebViewHolder.defaultUserAgent.ifEmpty { null }
+            }
+            // Clear cache so server sees new UA, then reload
+            webView.clearCache(true)
+            webView.loadUrl(webView.url ?: "https://www.google.com")
         }),
 
     // ── Actions ──
@@ -141,30 +150,24 @@ fun buildFabItems(
             }
         }),
 
-    // ── Dark Mode ──
+    // ── DARK MODE — Filter invert + YouTube dark theme ──
     FabItem(icon = Icons.Default.DarkMode,
         label = if (vm.darkModeEnabled) "Dark: ON" else "Dark: OFF",
         isToggle = true, isOn = vm.darkModeEnabled, activeColor = Color(0xFF7C4DFF),
         onClick = {
             vm.darkModeEnabled = !vm.darkModeEnabled
+            WebViewHolder.darkModeEnabled = vm.darkModeEnabled
             if (vm.darkModeEnabled) DarkModeInjector.enableDarkMode(activeWebView)
             else DarkModeInjector.disableDarkMode(activeWebView)
         }),
 
     // ── Incognito ──
-    FabItem(icon = Icons.Default.VisibilityOff,
-        label = if (vm.incognitoMode) "Incognito: ON" else "Incognito: OFF",
-        isToggle = true, isOn = vm.incognitoMode, activeColor = Color(0xFF555555),
-        onClick = {
-            vm.incognitoMode = !vm.incognitoMode
-            if (vm.incognitoMode) {
-                IncognitoManager.enterIncognito(); activeWebView?.reload()
-                Toast.makeText(context, "🕶️ Incognito ON", Toast.LENGTH_SHORT).show()
-            } else {
-                IncognitoManager.exitIncognito(); activeWebView?.reload()
-                Toast.makeText(context, "🔓 Incognito OFF", Toast.LENGTH_SHORT).show()
-            }
-        }),
+    FabItem(
+        icon = Icons.Default.VisibilityOff,
+        label = "Incognito",
+        activeColor = Color(0xFF555555), inactiveColor = Color(0xFF555555),
+        onClick = onOpenIncognito
+    ),
 
     // ── PiP ──
     FabItem(icon = Icons.Default.PictureInPicture,
@@ -191,4 +194,12 @@ fun buildFabItems(
     FabItem(icon = Icons.Default.SaveAlt, label = "Save Offline",
         activeColor = Color(0xFF66BB6A), inactiveColor = Color(0xFF66BB6A),
         onClick = { DownloadHelper.saveWebsiteOffline(context, activeWebView) }),
+
+    // ── VIEW SAVED OFFLINE PAGES ──
+    FabItem(
+        icon = Icons.Default.FolderOpen,
+        label = "Saved Pages",
+        activeColor = Color(0xFF66BB6A), inactiveColor = Color(0xFF66BB6A),
+        onClick = onOpenOfflinePages
+    ),
 )
